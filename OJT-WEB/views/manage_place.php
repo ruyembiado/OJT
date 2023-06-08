@@ -1,0 +1,143 @@
+<?php
+require_once 'header.php';
+require_once '../config/auth.php'; //session block
+?>
+<div class="row mx-auto mt-2">
+    <div class="d-flex justify-content-between">
+        <div>
+            <p class="text-start text-secondary m-0" style="font-size:13px"><i>Pages / Building</i></p>
+            <h4 class="h4 text-start text-secondary" style="font-size:17px">Building</h4>
+        </div>
+        <form method="post">
+            <div class="d-flex pb-3 pt-1 ">
+                <input class="form-control form-control-sm text-light" name="search_building" placeholder="Search..." style="background-color: rgb(51,51,51);" /><button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="row mx-auto mx-5">
+    <div class="col-md-3 mb-3">
+        <div class="card card-radius bg-dark border-0 py-5" style="height:100%">
+            <i class="fa fa-plus-circle text-light plus align-self-center" id="addbuilding_btn"></i>
+        </div>
+    </div>
+    <?php if (isset($_POST['search_building'])) {
+        $search = $_POST['search_building'];
+        $result = like('building', ['building_name' => $search, 'building_location' => $search]);
+    } else {
+        $result = findAll('building');
+    }
+    ?>
+    <?php foreach ($result as $row) : ?>
+        <div class="col-md-3 mb-3">
+            <div class="card card-radius bg-dark border-0 pt-1 px-4 pb-1">
+                <div class="card-header mb-3 px-0">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <a href="../views/rooms.php?building_id=<?= $row['building_id'] ?>&building_name=<?= $row['building_name'] ?>"><i class="fa fa-eye text-secondary icon_but"></i></a>
+                        <i class="fa fa-edit text-primary ms-2 icon_but" onclick="editbuilding(<?= $row['building_id'] ?>);"></i>
+                        <a class="delete m-0 p-0" href="../actions/delete_building.php?building_id=<?= $row['building_id'] ?>"><i class="fa fa-trash text-danger ms-2 icon_but"></i></a>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <div class="col-md-3 col-3 bg-primary bg-gradient p-2 py-3 card-radius">
+                        <i class="fa fa-building text-light" style="font-size:17px"></i>
+                    </div>
+                    <div>
+                        <a class="m-0 text-light text-start text-decoration-none" href="../views/rooms.php?building_id=<?= $row['building_id'] ?>&building_name=<?= $row['building_name'] ?>">
+                            <i class="fa fa-building"></i>
+                            <?= $row['building_name'] ?>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer mt-3 px-0">
+                    <p class="m-0 text-light text-start" style="font-size:13px; font-style:italic">
+                        <i class="fa fa-map-marker"></i>
+                        Location:
+                        <?= $row['building_location'] ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Edit Building Modal -->
+        <div class="modal fade" id="editbuildingmodal<?= $row['building_id'] ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5 text-light" id="exampleModalLabel"><i class="fa fa-building"></i> Update Building</h1>
+                    </div>
+                    <form method="post" action="../actions/manage_building.php">
+                        <div class="modal-body px-5 py-4 border-secondary">
+                            <div class="form-group text-start mb-2">
+                                <label>Building name</label>
+                                <input class="form-control bg-dark text-light" name="building_name" value="<?= $row['building_name'] ?>" placeholder="Building name" />
+                                <?php
+                                if (isset($_SESSION['errors']['id'])) :
+                                    if ($_SESSION['errors']['id'] == $row['building_id']) {
+                                        if (showError('building_name')) :
+                                            echo showError('building_name');
+                                        endif;
+                                    }
+                                endif;
+                                ?>
+
+                            </div>
+                            <div class="form-group text-start">
+                                <label>Building location</label>
+                                <input class="form-control bg-dark text-light" name="building_location" value="<?= $row['building_location'] ?>" placeholder="Building location" />
+                                <?php
+                                if (isset($_SESSION['errors']['id'])) :
+                                    if ($_SESSION['errors']['id'] == $row['building_id']) {
+                                        if (showError('building_location')) :
+                                            echo showError('building_location');
+                                        endif;
+                                    }
+                                endif;
+                                ?>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" name="building_id" value="<?= $row['building_id'] ?>">
+                            <button type="button" class="btn btn-secondary" onclick="closeditbuilding(<?= $row['building_id'] ?>);"><i class="fa fa-close"></i> Close</button>
+                            <button type="submit" class="btn btn-primary" name="update_building"><i class="fa fa-edit"></i> Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+</div>
+
+<!-- Add Building Modal -->
+<div class="modal fade" id="addbuildingmodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5 text-light" id="exampleModalLabel"><i class="fa fa-building"></i> Add Building</h1>
+            </div>
+            <form method="post" id="addbuilding" action="../actions/manage_building.php">
+                <div class="modal-body px-5 py-4 border-secondary">
+                    <div class="form-group text-start mb-2">
+                        <label>Building name</label>
+                        <input class="form-control bg-dark text-light" name="building_name" value="<?php echo getValue('building_name'); ?>" placeholder="Building name" />
+                        <?php if (showError('building_name')) :
+                            echo showError('building_name');
+                        endif; ?>
+                    </div>
+                    <div class="form-group text-start">
+                        <label>Building location</label>
+                        <input class="form-control bg-dark text-light" name="building_location" value="<?php echo getValue('building_location'); ?>" placeholder="Building location" />
+                        <?php if (showError('building_location')) :
+                            echo showError('building_location');
+                        endif; ?>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="closebuildingmodal" data-bs-dismiss="modal"><i class="fa fa-close"></i> Close</button>
+                    <button type="submit" class="btn btn-primary" name="add_building"><i class="fa fa-check"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php include 'footer.php'; ?>
